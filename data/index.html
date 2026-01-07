@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>NodeMCU Control</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 0 30px rgba(0,0,0,0.4);
+      text-align: center;
+      animation: pop 0.8s ease;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      letter-spacing: 1px;
+    }
+
+    button {
+      padding: 14px 28px;
+      margin: 10px;
+      border: none;
+      border-radius: 30px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .on {
+      background: #00ff9c;
+      color: black;
+    }
+
+    .off {
+      background: #ff4d4d;
+      color: white;
+    }
+
+    button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 15px rgba(255,255,255,0.4);
+    }
+
+    .status {
+      margin-top: 15px;
+      font-size: 14px;
+      opacity: 0.8;
+      animation: blink 1.5s infinite;
+    }
+
+    @keyframes pop {
+      from { transform: scale(0.7); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+
+    .bg-circle {
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 50%;
+      animation: float 10s infinite linear;
+    }
+
+    .c1 { top: -100px; left: -100px; }
+    .c2 { bottom: -120px; right: -120px; animation-delay: 5s; }
+
+    @keyframes float {
+      from { transform: rotate(0deg) translateX(30px) rotate(0deg); }
+      to { transform: rotate(360deg) translateX(30px) rotate(-360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-circle c1"></div>
+  <div class="bg-circle c2"></div>
+
+  <div class="card">
+    <h1>NodeMCU Control</h1>
+    <button class="on" onclick="send('/on')">LED ON</button>
+    <button class="off" onclick="send('/off')">LED OFF</button>
+    <div class="status" id="status">Waiting for action...</div>
+  </div>
+
+  <script>
+    function send(path) {
+      fetch(path)
+        .then(() => {
+          document.getElementById("status").innerText =
+            path === "/on" ? "LED is ON" : "LED is OFF";
+        })
+        .catch(() => {
+          document.getElementById("status").innerText = "Connection failed";
+        });
+    }
+  </script>
+</body>
+</html>
