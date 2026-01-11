@@ -2,9 +2,20 @@
 #include <ESP8266HTTPClient.h>
 #include <WiFiClient.h>
 
-// WiFi Credentials
-const char* ssid = "YOUR_WIFI_SSID";
-const char* password = "YOUR_WIFI_PASSWORD";
+// Multi-WiFi Support
+struct WiFiCred {
+  const char* ssid;
+  const char* pass;
+};
+
+WiFiCred networks[] = {
+  {"HomeWiFi", "home12345"},
+  {"PhoneHotspot", "phonepass"},
+  {"CollegeWiFi", ""},        // open network
+  {"YOUR_WIFI_SSID", "YOUR_WIFI_PASSWORD"}
+};
+
+int totalNetworks = 4;
 
 // Server Config
 const char* serverUrl = "http://YOUR_SERVER_IP:3000";
@@ -23,37 +34,72 @@ void setup() {
   Serial.println("\n=== ESP8266 Boot ===");
   sendLog("ESP booting...");
 
-  // Connect to WiFi
+  // Try connecting to WiFi networks
   WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-  
-  Serial.print("Connecting to WiFi");
-  int attempts = 0;
-  while (WiFi.status() != WL_CONNECTED && attempts < 20) {
-    delay(500);
-    Serial.print(".");
-    attempts++;
+  bool connected = false;
+
+  for (int i = 0; i < totalNetworks && !connected; i++) {
+    Serial.print("Trying: ");
+    Serial.print(networks[i].ssid);
+    
+    if (strlen(networks[i].pass) > 0) {
+      WiFi.begin(networks[i].ssid, networks[i].pass);
+    } else {
+      WiFi.begin(networks[i].ssid);  // open network
+    }
+    
+    int attempts = 0;
+    while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+      delay(500);
+      Serial.print(".");
+      attempts++;
+    }
+
+    if (WiFi.status() == WL_CONNECTED) {
+      connected = true;
+      Serial.println("\n✓ WiFi Connected!");
+      Serial.print("Network: ");
+      Serial.println(networks[i].ssid);
+      Serial.print("IP: ");
+      Serial.println(WiFi.localIP());
+      
+      String logMsg = "WiFi connected: " + String(networks[i].ssid) + " (" + WiFi.localIP().toString() + ")";
+      sendLog(logMsg);
+      
+      // Sync LED state from server
+      syncLedState();
+    } else {
+      Serial.println(" Failed");
+    }
   }
 
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("\nWiFi Connected!");
-    Serial.print("IP: ");
-    Serial.println(WiFi.localIP());
-    sendLog("WiFi connected: " + WiFi.localIP().toString());
-    
-    // Sync LED state from server
-    syncLedState();
-  } else {
-    Serial.println("\nWiFi Failed!");
-    sendLog("WiFi connection failed");
+  if (!connected) {
+    Serial.println("\n✗ All WiFi networks failed!");
+    sendLog("WiFi: All networks failed");
   }
 }
 
 void loop() {
   if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("WiFi disconnected, reconnecting...");
-    WiFi.begin(ssid, password);
-    delay(5000);
+    Serial.println("WiFi disconnected, retrying networks...");
+    
+    // Try all networks again
+    for (int i = 0; i < totalNetworks; i++) {
+      if (strlen(networks[i].pass) > 0) {
+        WiFi.begin(networks[i].ssid, networks[i].pass);
+      } else {
+        WiFi.begin(networks[i].ssid);
+      }
+      
+      delay(5000);
+      
+      if (WiFi.status() == WL_CONNECTED) {
+        Serial.print("Reconnected to: ");
+        Serial.println(networks[i].ssid);
+        sendLog("Reconnected: " + String(networks[i].ssid));
+        break;
+      }
+    }
     return;
   }
 
