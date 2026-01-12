@@ -28,6 +28,9 @@ yarn-error.log*
 package-lock.json
 .npm
 
+# Config (credentials)
+config.h
+
 # Virtual Environment
 venv/
 env/

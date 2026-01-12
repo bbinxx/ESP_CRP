@@ -1,24 +1,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
 #include <WiFiClient.h>
-
-// Multi-WiFi Support
-struct WiFiCred {
-  const char* ssid;
-  const char* pass;
-};
-
-WiFiCred networks[] = {
-  {"HomeWiFi", "home12345"},
-  {"PhoneHotspot", "phonepass"},
-  {"CollegeWiFi", ""},        // open network
-  {"YOUR_WIFI_SSID", "YOUR_WIFI_PASSWORD"}
-};
-
-int totalNetworks = 4;
-
-// Server Config
-const char* serverUrl = "http://YOUR_SERVER_IP:3000";
+#include "config.h"  // WiFi credentials & server URL
 
 #define LED_PIN LED_BUILTIN
 unsigned long lastPoll = 0;
