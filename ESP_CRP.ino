@@ -1,13 +1,13 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266HTTPClient.h>
-#include <WiFiClient.h>
+#include <WiFiClientSecure.h>
 #include "config.h"  // WiFi credentials & server URL
 
 #define LED_PIN LED_BUILTIN
 unsigned long lastPoll = 0;
 const long pollInterval = 3000; // 3 seconds
 
-WiFiClient wifiClient;
+WiFiClientSecure wifiClient;
 
 void setup() {
   Serial.begin(9600);
@@ -15,6 +15,10 @@ void setup() {
   digitalWrite(LED_PIN, HIGH);
 
   Serial.println("\n=== ESP8266 Boot ===");
+  
+  // Configure SSL (ignore certificate validation for now)
+  wifiClient.setInsecure();
+  
   sendLog("ESP booting...");
 
   // Try connecting to WiFi networks
