@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: esp-control-server
+    name: esp-pulse
     env: node
     buildCommand: cd SERVER && npm install
     startCommand: cd SERVER && npm start
