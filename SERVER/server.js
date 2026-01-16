@@ -105,7 +105,16 @@ app.post("/set", (req, res) => {
 
 // Get LED state (ESP polls this)
 app.get("/get", (req, res) => {
-  // console.log(`🔍 [API] GET /get (ESP Polling)`);
+  // Update heartbeat since ESP just contacted us
+  db.setState('lastHeartbeat', Date.now(), (err) => {
+    if (err) console.error("❌ [DB] Heartbeat update failed:", err);
+
+    // Broadcast "I'm still alive" to dashboard (throttled could be better, but real-time is requested)
+    // We only broadcast if we haven't in the last 2 seconds to save bandwidth, 
+    // OR if we want pure realtime, we just emit. Let's emit to be safe/responsive.
+    sendStatus();
+  });
+
   db.getState('ledState', (err, ledState) => {
     if (err) return res.status(500).json({ error: "Database error" });
     res.json({ led: ledState || "off" });
