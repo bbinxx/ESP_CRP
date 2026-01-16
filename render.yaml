@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: esp-control-server
+    env: node
+    buildCommand: cd SERVER && npm install
+    startCommand: cd SERVER && npm start
+    envVars:
+      - key: PORT
+        value: 3000

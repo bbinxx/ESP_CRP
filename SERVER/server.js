@@ -16,11 +16,11 @@ let logs = [];
 app.post("/set", (req, res) => {
   const prevState = ledState;
   ledState = req.body.state;
-  
+
   if (prevState !== ledState) {
     addLog("WEB", `LED changed: ${prevState} → ${ledState}`);
   }
-  
+
   res.json({ ok: true, state: ledState });
 });
 
@@ -48,22 +48,22 @@ app.get("/", (req, res) => {
 
 function addLog(source, msg) {
   const timestamp = new Date().toLocaleTimeString("en-US", { hour12: false });
-  const entry = { 
-    time: timestamp, 
-    source, 
+  const entry = {
+    time: timestamp,
+    source,
     msg,
-    id: Date.now() 
+    id: Date.now()
   };
-  
+
   logs.push(entry);
   if (logs.length > 500) logs.shift();
-  
+
   console.log(`[${timestamp}] ${source}: ${msg}`);
 }
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`\n🚀 Server running on http://localhost:${PORT}`);
+  console.log(`\n🚀 Server running on port ${PORT}`);
   console.log("LED State: OFF");
   addLog("SRV", "Server started");
 });

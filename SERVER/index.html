@@ -279,11 +279,9 @@
   </div>
 
   <script>
-    const API_BASE = '/.netlify/functions/api';
-
     async function setLED(state) {
       try {
-        const res = await fetch(`${API_BASE}/set`, {
+        const res = await fetch('/set', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ state })
@@ -297,7 +295,7 @@
 
     async function fetchLogs() {
       try {
-        const res = await fetch(`${API_BASE}/logs`);
+        const res = await fetch('/logs');
         const logs = await res.json();
         displayLogs(logs);
       } catch (err) {
