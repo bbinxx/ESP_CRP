@@ -528,15 +528,116 @@
       btnOff.classList.toggle('active', currentLedState === 'off');
     }
 
-    // Auto-refresh
-    setInterval(fetchStatus, 2000);
-    setInterval(fetchLogs, 2000);
+    // Initialize Socket.IO for real-time updates
+    const socket = io();
+    let currentLedState = 'off';
+    let espOnline = false;
+    let totalLogs = 0;
 
-    // Initial load
-    fetchStatus();
-    fetchLogs();
+    socket.on('connect', () => {
+      console.log('✅ Socket.IO connected:', socket.id);
+    });
+
+    socket.on('disconnect', () => {
+      console.log('❌ Socket.IO disconnected');
+    });
+
+    // Real-time status updates
+    socket.on('status', (data) => {
+      console.log('📊 Status update:', data);
+      espOnline = data.online;
+      currentLedState = data.ledState;
+
+      if (data.lastSeen) {
+        const lastSeen = new Date(data.lastSeen);
+        const now = new Date();
+        const diff = Math.floor((now - lastSeen) / 1000);
+        document.getElementById('lastSeen').textContent = diff < 60 ? `${diff}s` : 'offline';
+      } else {
+        document.getElementById('lastSeen').textContent = '--';
+      }
+
+      updateUI();
+    });
+
+    // Real-time log updates
+    socket.on('logs', (logs) => {
+      console.log('📝 Received', logs.length, 'logs');
+      totalLogs = logs.length;
+      displayLogs(logs);
+      document.getElementById('logCount').textContent = totalLogs;
+    });
+
+    async function setLED(state) {
+      console.log(`Setting LED to: ${state}`);
+
+      const btnOn = document.getElementById('btnOn');
+      const btnOff = document.getElementById('btnOff');
+      btnOn.disabled = true;
+      btnOff.disabled = true;
+
+      try {
+        const res = await fetch('/set', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ state })
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const data = await res.json();
+        console.log('✅ LED set:', data);
+        // Updates will come via Socket.IO automatically
+      } catch (err) {
+        console.error('❌ Error:', err);
+        alert('Failed to set LED state');
+      } finally {
+        btnOn.disabled = false;
+        btnOff.disabled = false;
+      }
+    }
+
+    function displayLogs(logs) {
+      const container = document.getElementById('logs');
+
+      if (logs.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <p>No activity yet</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = logs.map(log => `
+        <div class="log-entry log-${log.source.toLowerCase()}">
+          <span class="log-time">${log.time}</span>
+          <span class="log-source ${log.source}">${log.source}</span>
+          <span>${log.msg}</span>
+        </div>
+      `).join('');
+
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function updateUI() {
+      const statusDot = document.getElementById('statusDot');
+      statusDot.className = `status-dot ${espOnline ? 'online' : 'offline'}`;
+
+      document.getElementById('ledStateText').textContent = currentLedState.toUpperCase();
+
+      const btnOn = document.getElementById('btnOn');
+      const btnOff = document.getElementById('btnOff');
+
+      btnOn.classList.toggle('active', currentLedState === 'on');
+      btnOff.classList.toggle('active', currentLedState === 'off');
+    }
+
     updateUI();
   </script>
+
+  <!-- Socket.IO Client Library -->
+  <script src="/socket.io/socket.io.js"></script>
 </body>
 
 </html>
